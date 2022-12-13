@@ -1,14 +1,97 @@
 ---
-title: "Gov 50 Final Project"
-author: "Your Name Here"
-description: "My final project"
+title: "On the way to constitutional government: connection between infant's deathrate and democracy"
+author: "Kateryna Olkhovyk"
+description: "An observational analysis of the relationship between the infant mortality rate and democracy"
 output:
   distill::distill_article:
     self_contained: false
 ---
 
+## Introduction 
+
+## Does a freer democracy have a higher or lower infant mortality rate? At first glance, it would seem that a lower infant mortality rate would be the logical assumption. I want to determine if this is really the case. To answer this question, I used the Political Violence data set that was provided on the Gov 50 website to look at this relationship. This project consists of an observational research design because we are taking data from real-life observations rather than a controlled experiment.
+
+## Data and research design
+
+## To do this, I chose two separate variables from two different decades to create separate bivariate plots. The dependent variable is the measure of democracy based on Gastil's Political Rights definition (democ70 and democ80). The second variable is the infant mortality rate, specifically the number of deaths of infants under one-year-old per 1000 children born (wdiinfmt70 and wdiinfmt80).
+##For the dependent variable, the measure of democracy, it is important that we establish what this means. Contrary to our assumption that a higher democracy score means a overall better democracy, The Gastil scale rates a country’s democracy based on a scale of 1-7, with 1 being the most free or best democracy and 7 being the least free or worst democracy. Therefore, a positive correlation between these two variables would indicate that the better the democracy, the lower the infant mortality rate would be (closest to 0 for the x andy-axiss). 
 
 
-## Project thoughts
 
-I am interested in exploring data related to...
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(gapminder)
+library(tidyverse)
+```
+
+```{r}
+violence <- read.csv("violence.csv")
+```
+
+
+```{r}
+ggplot(violence, aes(democ70)) +
+  geom_histogram() +
+  labs(x="Number of countries", y="Infant mortality rate in the 70s")
+```
+
+```{r}
+ggplot(violence, aes(democ80)) +
+  geom_histogram() +
+  labs(x="Number of countries", y="Infant mortality rate in the 80s")
+```
+
+## In my project, I would like to explore and determine whether there is indeed a positive correlation between the quality of democracy and the infant mortality rate. I predict that my results will display a positive correlation, with the measure of democracy being the dependent variable and the log of the GDP per capita being the independent variable. To prove this, I will look to see if there is lower infant mortality when there is a higher democracy score for a given country (value closer to 0 on the y-axis). The Political Violence data set is made up of 208 identified government structures indicated by "country." For each variable, there are also three data sets divided by year, and I will look at only two (70s, 80s) because the measure of democracy was not given for the 1960s in the data set for any country.
+
+## Results
+
+```{r, fig.width = 8, fig.height = 3}
+plot_ <- violence %>%
+  ggplot(aes(x=wdiinfmt70,y=democ70))+
+  geom_point(position = "jitter")+
+  geom_smooth(method="lm")+
+  xlab("Infant mortality rate in the 70s")+
+  ylab("Quality of the democracy in the 70s")
+plot_
+```
+
+
+```{r}
+plot_2 <- violence %>%
+  ggplot(aes(x=wdiinfmt80,y=democ80))+
+  geom_point(position = "jitter")+
+  geom_smooth(method="lm")+
+  xlab("Infant mortallity rate in the 80s")+
+  ylab("Quality of the democracy in the 80s")
+plot_2
+```
+
+## Although these graphs appear to back up my prediction, namely that the quality of democracy (lower to zero is a better democracy) shares a positive relationship with the explanatory variable of infant mortality rate, we must also consider the confounding variables that might also share a correlation, have an effect on, or help to explain the quality of democracy. To do this, I discovered several confounders present in the Political Violence data set, including TVs per 1000 population, number of radios per 1000 population, number of newspapers per capita, number of riots in the given country, infant mortality rate, and population. While, of course, there could be other confounding variables, like level of education, I am only considering the confounders present in the data sent because those are the values I can use to create a multivariate regression. To address, to some degree, the question of confounders, I put the following additional explanatory variables into a multivariate regression to receive the following results. 
+
+
+
+```{r}
+lm1 <- lm(data = violence, formula = democ70 ~ wdiinfmt70 + tvPC70 + lrgdp70 + radiosPC70 + newspaperPC70 + riots70 + pop70)
+summary(lm1)
+```
+
+```{r}
+lm2 <- lm(data = violence, formula = democ80 ~ wdiinfmt80 + tvPC80 + lrgdp80 + radiosPC80 + newspaperPC80 + riots80 + pop80)
+summary(lm2)
+```
+
+## In the above multivariate regression models, and as previously mentioned above, we include features that we hypothesize could be predictive of the quality of democracy, as measured by Gastil. These predictors fall into the following categories of economic prosperity (log-GDP), access to information (TVs and radios per 1000 population and newspapers per capita), political unrest (riots during the decade), healthcare and living standards (infant mortality rate), and population. This model displays whether these factors can together explain the variance in the quality of democracy in the 70s and 80s. It is important to note that we did not include other factors because they lacked a significant amount of data (i.e., the number of political purges in the 70s). 
+##Surprisingly, we notice that while there are no statistically significant values in the 70s with a value of 0.5, the rate of infant mortality in the 80s is extremely significant with a p-value of 0.0003; a value far below the significance threshold of 0.05. Although it is difficult to explain these drastic differences between decades, one possible explanation could be additional confounding variables that were present in those respective decades and have a significant influence on my regression results.  
+## While we are able to explain a portion of the variance as evidenced by the Multiple R-squared and adjusted R-squared values being greater than 0.5, we find that this model lacks inferential power for all but one of the features of interest, as only one of them meets the 0.05 threshold—albeit in only a single decade—for statistical significance (infant mortality rate in the 80s)  as measured by their p-value. We suspect that this is likely due to a combination of factors: first, missing values exist for several of the predictors, and the default handling of NA values is to drop those observations from the analysis, leaving us with fewer than 100 observations. Second, some of the predictors have low variance themselves (for instance, the riots indicator is interesting but with a median value of 0 is not as informative as hoped). 
+## My main coefficient of interest is infant mortality rate, as this is a well-measured variable that we suspect is often correlated with a host of sociopolitical outcomes. In the above model with the given additional explanatory values included, it does achieve statistical significance in the 80s, with a p-value less than my threshold of 0.05. However, this is not the case in the 70s where the p-value is above the threshold of 0.05. In both the 70s and 80s my coefficient of the infant mortality rate variable is positive, which suggests a positive correlation between this explanatory variable and the outcome variable (quality of democracy). This supports my original hypothesis that nations with stronger political institutions have lower infant mortality rate. It is important to note that we can only draw the previous conclusion for the 80s as in the 70s, the infant mortality rate was not significant. Additionally, we are faced with a slew of limitations that may or may not play a role in my results.
+##However, even though the infant mortality rate variable was observed to be significant in the 80s, we would not draw a causal relationship between it and the outcome variable. Multivariate regression models are better suited to inferential studies of association rather than causation, and in this particular example, it is likely that the quality of a state's democracy could create conditions for a lower infant mortality rate; however, this can only be confirmed through more in-depth research.
+
+
+##Conclusion
+
+##As in dictated by the results, we can only partially affirm my prior prediction that there is a negative correlation between the outcome variable, measure of democracy, and the explanatory variable, the infant mortality rate. These results displayed statistical significance between these variables in the 70s but not in the 80s. At the same time, we discovered something surprising. In the 80s, the infant mortality rate was extremely significant and was the only significant value in my multivariate regression. While these differing significances—in the 70s, infant mortality was not significant, but it was in the 80s—are interesting discoveries, they do not indicate causality. Additionally, a more complex and expansive research project may discover why we saw this difference in the 70s and 80s.  
+##My project was limited by several factors, the most significant being time and the inherent limitations found in the data set. A more expansive project would have included elements like robust checks to see how additional explanatory factors influence the regression. Additionally, the Political Violence data set did not include many social indicators that could serve as confounding variables. Without the inclusion of many factors, including but certainly not limited to divorce rate, level of education, and religious divisions., it becomes increasingly difficult to confidently affirm any significance found in my data set.
+
+
+
+
